@@ -1,0 +1,11 @@
+autoscaling: enabled
+replicaCount: 2
+namespace: "helloworld"
+image:
+  name: nginx
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: ""
+service:
+  type: ClusterIP
+  port: 80
