@@ -212,3 +212,50 @@ you can simply clean up using a command
 
 
 That removes entire app `mympapp` with its workloads.
+
+## Helm customizing 
+
+### chart parameters
+
+Talking about my previous example appliction. Have you wonder, how the title of the application got created with name  `User's Blog!` ?
+
+Its because the bitname/wordress chart was created such a way it takes variable of the name of blog and replaced it in the template.
+
+```sh
+#Values.yaml default values
+...
+wordpressBlogName: User's Blog!
+wordpressUserEmail: user@example.com
+...
+```
+
+we can also override that using `--set` command while installing the chart. Like this
+
+`helm install --set wordpressBlogName="Helm Sample Blog" wordpressUserEmail="john@test.com" mywpapp bitnami/wordpress`
+
+This will create an instance with provided params.
+
+what if you have more such custom params? 
+
+You can use the `--values` option passing the file with custome values `custom-values.yaml` file in your local, like this
+
+`helm install --values custom-values.yaml mywpapp bitnami/wordpress`
+
+Make sure your custom-values file contains all the varaibles you want to override.
+
+
+### Helm pull - chart files download
+
+If you want to edit the values.yaml with out passing custom values. Also you want to custom the whole chart the way you want. We can use `pull` command.
+
+`helm pull bitnami/wordpress`
+
+That downloads archived (tar) copy of files. which you need to unartchive (untar) in to your local directory. Or directly you can call this command.
+
+`helm pull --untar bitnami/wordpress`
+
+Now if you do `ls wordpress` you see all files in the worpress chart in your local directory.
+
+And then you can install it locally like this
+
+`helm install my-custom-wpapp ./wordpress`
