@@ -1,11 +1,11 @@
 autoscaling: enabled
-replicaCount: 2
+replicaCount: 1
 namespace: "helloworld"
 image:
   name: nginx
   repository: nginx
   pullPolicy: IfNotPresent
-  tag: ""
+  tag: "1.21.6-alpine"
 service:
-  type: ClusterIP
+  type: NodePort
   port: 80
