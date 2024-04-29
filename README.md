@@ -1,4 +1,4 @@
-# helm_practice
+# Helm - Notes
 
 There are major changes from Helm 2 to Helm 3. 
 We use Helm v3.X in our practice (it is considered as latest stable at present)
@@ -113,7 +113,7 @@ Running `helm --help` is enough to know commands.
 - `helm search wordpress` - search for chart in locally configured repos.
 
 To add the repo you can use
-```sh
+```console
 $ helm repo add bitnami https://charts.bitnami.com/bitnami
 "bitnami" has been added to your repositories
                                                
@@ -126,7 +126,7 @@ bitnami/wordpress-intel 2.1.31          6.1.1           DEPRECATED WordPress for
 ````
 Then we can install the wordpress with your app name `mywpapp`
 
-```sh
+```console
 $ helm install mywpapp bitnami/wordpress
 NAME: mywpapp
 LAST DEPLOYED: Mon Apr 29 13:21:22 2024
@@ -172,7 +172,7 @@ WARNING: There are "resources" sections in the chart not set. Using "resourcesPr
 
 Now `helm list` gives us list of avaible charts
 
-```sh
+```console
 $ helm list
 NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                APP VERSION
 mywpapp default         1               2024-04-29 13:21:22.2984709 +0530 IST   deployed        wordpress-22.2.2     6.5.2
@@ -180,7 +180,7 @@ mywpapp default         1               2024-04-29 13:21:22.2984709 +0530 IST   
 
 Once you install the app. You can see releated workloads like pods, svc, deployments in your k8 namespace.
 
-```sh
+```console
 $ kubectl get all
 NAME                                   READY   STATUS     RESTARTS   AGE
 pod/mywpapp-mariadb-0                  0/1     Init:0/1   0          4m1s
@@ -221,7 +221,7 @@ Talking about my previous example appliction. Have you wonder, how the title of 
 
 Its because the bitname/wordress chart was created such a way it takes variable of the name of blog and replaced it in the template.
 
-```sh
+```yaml
 #Values.yaml default values
 ...
 wordpressBlogName: User's Blog!
@@ -259,3 +259,120 @@ Now if you do `ls wordpress` you see all files in the worpress chart in your loc
 And then you can install it locally like this
 
 `helm install my-custom-wpapp ./wordpress`
+
+## Lifecycle Management
+
+Each time we pull and install the repo creates a release. In the background it upgrade/downgrade/remove objects in the kubernetes layer.  
+The life cycle of the Helm chart consists of 3 stages:
+- Install
+```console
+$ helm repo add  bitnami https://charts.bitnami.com/bitnami
+$ helm install my-web bitnami/nginx
+```
+- Upgrade
+```console
+$ helm history my-web
+REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION     
+1               Mon Apr 29 10:32:14 2024        superseded      nginx-12.0.4    1.22.0          Install complete
+2               Mon Apr 29 10:32:18 2024        superseded      nginx-12.0.5    1.22.0          Upgrade complete
+3               Mon Apr 29 10:32:23 2024        deployed        nginx-12.0.4    1.22.0          Upgrade complete
+
+$ helm upgrade my-web bitnami/nginx --version 13
+Release "dazzling-web" has been upgraded. Happy Helming!
+NAME: dazzling-web
+LAST DEPLOYED: Mon Apr 29 10:37:23 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 4
+TEST SUITE: None
+NOTES:
+CHART NAME: nginx
+CHART VERSION: 13.2.34
+APP VERSION: 1.23.4
+
+$ helm history my-web
+$REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION     
+1               Mon Apr 29 10:32:14 2024        superseded      nginx-12.0.4    1.22.0          Install complete
+2               Mon Apr 29 10:32:18 2024        superseded      nginx-12.0.5    1.22.0          Upgrade complete
+3               Mon Apr 29 10:32:23 2024        superseded      nginx-12.0.4    1.22.0          Upgrade complete
+4               Mon Apr 29 10:37:23 2024        deployed        nginx-13.2.34   1.23.4          Upgrade complete
+```
+- Rollback
+```console
+$ helm rollback my-web
+Rollback was a success! Happy Helming!
+
+$ helm history my-web
+REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION     
+1               Mon Apr 29 10:32:14 2024        superseded      nginx-12.0.4    1.22.0          Install complete
+2               Mon Apr 29 10:32:18 2024        superseded      nginx-12.0.5    1.22.0          Upgrade complete
+3               Mon Apr 29 10:32:23 2024        superseded      nginx-12.0.4    1.22.0          Upgrade complete
+4               Mon Apr 29 10:37:23 2024        superseded      nginx-13.2.34   1.23.4          Upgrade complete
+5               Mon Apr 29 10:44:38 2024        deployed        nginx-12.0.4    1.22.0          Rollback to 3 
+```
+NOTE: We can rollback the app version or chart to previous version. But the data attached to volume like DB are not touched. So make sure you take timely backups of your volumes.
+
+## Helm charts Anatomy
+### Writing Helm charts
+
+We can write any kubernetes application just like a installation wizard. 
+Helm charts can do some extra things too. We have a way to restore. 
+
+Create a chart directory by simply creating it commandline. It automatically create templates, chart, values and Readme files.
+
+```console
+$ helm create hello-world
+Creating hello-world
+
+# it creates a directory
+$ cd hello-world
+$ tree
+.
++--- .helmignore
++--- Chart.yaml
++--- charts
++--- templates
+|   +--- deployment.yaml
+|   +--- hpa.yaml
+|   +--- ingress.yaml
+|   +--- NOTES.txt
+|   +--- service.yaml
+|   +--- serviceaccount.yaml
+|   +--- tests
+|   |   +--- test-connection.yaml
+|   +--- _helpers.tpl
++--- values.yaml
+
+```
+
+But we need use all of them. So remove the unwanted and keep the important ones.
+
+Variables that we pass from values.yaml will be replaced with `{{ varname }} ` in the template
+For ex:
+
+```sh
+apiVersion: apps/v1
+kind: Deployment
+name: {{ .Release.Name }}-nginx
+...
+...
+```
+Here `{{ }}` is go template language
+
+`.Release.Name` - first dot indicates the root level. and .Name indicates object key.
+
+There are similar objects.
+
+|  Release  |  Chart  |  Capabilities | Values |
+|---|---|---|---|
+| Release.Name  | Chart.Name  | Capabilities.KubeVersion | Values.replicaCount |
+| Release.NameSpace | Chart.ApiVersion  | Capabilities.ApiVersions  | Values.image |
+| Release.IsInstall | Chart.Version  | Capabilities.HelmVersion |  |
+| Release.Revision  | Chart.Type  | Capabilities.GitCommit  |  |
+| Release.Service  | Chart.Keyowords  | Capabilities.GoVersion  |  |
+| Release.IsUpgrade | Chart.Home |  | |
+
+
+There are serveral other variables available. Basically pass values from values.yml, capability from the host system.
+
+
