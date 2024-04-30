@@ -270,6 +270,7 @@ $ helm repo add  bitnami https://charts.bitnami.com/bitnami
 $ helm install my-web bitnami/nginx
 ```
 - Upgrade
+
 ```console
 $ helm history my-web
 REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION     
@@ -298,6 +299,7 @@ $REVISION        UPDATED                         STATUS          CHART          
 4               Mon Apr 29 10:37:23 2024        deployed        nginx-13.2.34   1.23.4          Upgrade complete
 ```
 - Rollback
+
 ```console
 $ helm rollback my-web
 Rollback was a success! Happy Helming!
