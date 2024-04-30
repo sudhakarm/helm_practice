@@ -1,0 +1,11 @@
+autoscaling: enabled
+replicaCount: 1
+namespace: "helloworld"
+image:
+  name: nginx
+  repository: nginx
+  pullPolicy: IfNotPresent
+  tag: "1.21.6-alpine"
+service:
+  type: NodePort
+  port: 80
