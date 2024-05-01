@@ -270,6 +270,7 @@ $ helm repo add  bitnami https://charts.bitnami.com/bitnami
 $ helm install my-web bitnami/nginx
 ```
 - Upgrade
+
 ```console
 $ helm history my-web
 REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION     
@@ -298,6 +299,7 @@ $REVISION        UPDATED                         STATUS          CHART          
 4               Mon Apr 29 10:37:23 2024        deployed        nginx-13.2.34   1.23.4          Upgrade complete
 ```
 - Rollback
+
 ```console
 $ helm rollback my-web
 Rollback was a success! Happy Helming!
@@ -376,3 +378,330 @@ There are similar objects.
 There are serveral other variables available. Basically pass values from values.yml, capability from the host system.
 
 
+### Helm Lint 
+When dealing with various files in the chart. There could be a chance of committing mistakes with whitspaces or wrong indentationa. In this case you have to use `helm lint <chartname>`
+
+```console
+$ helm lint ./hello-world/
+==> Linting ./hello-world/
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+```
+
+### Helm template validation
+
+If we are not sure we used wrong variable name or variable doesnt exist or how these values are translated. In this case we have to use `helm template <chartname>`. This will render us the clear output after merging values in to the template. Means the final yaml.
+
+```console
+$ helm template ./hello-world/
+---
+# Source: hello-world/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name
+  namespace: helloworld
+  labels:
+    app: release-name
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: release-name
+---
+# Source: hello-world/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: release-name
+  namespace: helloworld
+  labels:
+    app: release-name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: release-name
+  template:
+    metadata:
+      labels:
+        app: release-name
+    spec:
+      containers:
+        - name: nginx
+          image: "nginx:1.21.6-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+```
+
+### Helm Dryrun
+
+Before installing the chart, if you want to make sure that all required fields are provided.
+use `--dry-run` option to test that.
+
+```console
+$ helm install hello ./hello-world/ --dry-run
+NAME: hello
+LAST DEPLOYED: Tue Apr 30 17:28:46 2024
+NAMESPACE: default
+STATUS: pending-install
+REVISION: 1
+TEST SUITE: None
+HOOKS:
+MANIFEST:
+---
+# Source: hello-world/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello
+  namespace: helloworld
+  labels:
+    app: hello
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: hello
+---
+# Source: hello-world/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello
+  namespace: helloworld
+  labels:
+    app: hello
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+        - name: nginx
+          image: "nginx:1.21.6-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+```
+
+This gives accurate chart definitions replacing release name as well.
+
+### Helm Functions
+
+In the the templates, we can write logical cases to take values from the variables using functions.
+There are different types of functions. For example `upper` is a string function that converts the string to uppercase. If you want to conver the repository name of your deployment to be uppercase. You can simply use like this
+```sh
+#suppose value of image.repository is 'nginx'
+image: {{ upper .Values.image.repository }}
+#output 
+image: NGINX
+
+
+image: {{ quote .Values.image.repository }} 
+#output 
+image: "nginx"
+
+image: {{ replace "x" "y" .Values.image.repository }} 
+#output 
+image: nginy
+```
+There are serveral other functions available in helm documentation
+https://helm.sh/docs/chart_template_guide/function_list
+
+Also, using `default` function we can pass the default value to take in case the variable is not in values.yml. Like below
+
+`image: {{ default "nginx:1.16.0" .Values.image.repository}}`
+
+The coalesce function takes a list of values and returns the first non-empty one.
+```sh
+Ex: 
+coalesce 0 1 2
+
+returns 1
+```
+
+### Helm pipelines
+
+Just like pipes in linux, we can pass the output of one command/expression to the next stage using pipe `|`. In helm we call it as pipeline.
+
+Chaining together multiple functions to express a series of transformations is known as a pipeline.
+
+Taking the same example as above. We can send the value of image repository
+
+```sh
+# source: templates/deployment.yaml
+image: {{ replace "ng" "bz" .Values.image.repository | upper }}
+#output 
+image: BZINX
+```
+
+### Helm Conditionals
+In programming language we use `if` statement for conditional logic. Similarly we can set conditions in the helm templates. For example, our service yaml has the new label called `orgLabel` passed in the values.yaml.
+write a condition only if that is present.
+
+* Remember the condition block should have properindentation and also proper closure. if - else - end. 
+* Space after the dash.
+* dash indicates replace this block
+```yaml
+# eq is equals 
+
+metadata: 
+  name: {{ .Release.Name }}-nginx
+  {{- if .Values.orgLabel }}
+  labels:
+    org: {{ .Values.orgLabel }}
+  {{- end }}
+  spec:
+    ports:
+      - port: 80
+        name: http
+  ...
+
+```
+### With blocks - Scopes
+
+Suppose we have a configmap.yaml with data as dictionaty reading from values.yaml.
+That king of hierarchy with scope. Here `dot` in the `.Values` indicates that is on the root level.
+```yaml
+# values.yaml
+app:
+  ui:
+    bg: red
+    fg: black
+  db:
+    name: "user"
+    conn: "mongodb://localhost:27020/dbname"
+```
+
+```yaml
+# configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-appinfo
+data:
+  background: {{ .Values.app.ui.bg }}
+  foreground : {{ .Values.app.ui.fg }}
+  database: {{ .Values.app.db.name }}
+  connection: {{ .Values.app.db.conn }}
+  chartname: {{ .Release.Name }}
+```
+This works by just regular template filling values. We can use `with` block for not repeating the references directly from the root level. Note that `$` also can be used, which indicates the root level even if you are inside with block.
+
+The above configmap can be rewritten using with block like below
+
+```yaml
+# configmap.yaml with "with block"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-appinfo
+data:
+  {{- with .Values.app }} # takes reference as .Values.app
+    {{- with .ui }} # takes reference as .Values.app + .ui
+  background: {{ .bg }}
+  foreground : {{ .fg }}
+    {{- end }} # end of ui
+    {{- with .db }} # takes reference as .Values.app + .ui
+  database: {{ .name }}
+  connection: {{ .conn }} 
+  chartname: {{ $Release.Name}} # even inside the db scope, it works with $ in prefix as root scope
+    {{- end }} # end of .db
+  {{- end }} # end of .Values.app
+```
+
+### Loops and Ranges
+Just like in programming, we have loop for repeative function. Based on the number of iterations that function works.
+
+Lets have a list of regions in teh values.yaml and our config map should add all feilds based on list/array depending on the size of array.
+
+Ex: 
+
+```yaml
+# values.yaml
+regions:
+  - ohio
+  - newyork
+  - ontario
+  - london
+  - singapore
+  - mumbai
+```
+```yaml
+# configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-appinfo
+data:
+  regions: 
+  {{- range .Values.regions }} # loop starts depending on the range of items in regions list.
+    - {{ . | quote }}
+  {{- end }}  #end of loop
+```
+
+Another example
+```yaml
+# values.yaml
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  annotations: {}
+  name: webapp-sa
+  labels: 
+    tier: frontend
+    type: web
+    mode: proxy
+```
+
+```yaml
+# serviceaccount.yaml
+{{- with .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $.Values.serviceAccount.name }}
+  labels:
+    {{- range $key, $val := $.Values.serviceAccount.labels }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+    app: webapp-color
+{{- end }}
+```
+
+output of service account will be like
+
+```yaml
+---
+# serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-sa
+  labels:
+    mode: proxy
+    tier: frontend
+    type: web
+    app: webapp-color
+```
