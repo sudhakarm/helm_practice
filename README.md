@@ -3,14 +3,23 @@
 There are major changes from Helm 2 to Helm 3. 
 We use Helm v3.X in our practice (it is considered as latest stable at present)
 
-1. Creating a simple service and deployment - "Hello World"
-charts are just a bunch of text files. You can install and uninstall a chart.
-By readinf the content the helm knows what to implement. Thats how we have to write them.
+<p>Creating a simple service and deployment - "Hello World"
+charts are just a bunch of text files. You can install and uninstall a chart.</p>
+By reading the content the helm knows what to implement. Thats how we have to write them.
+<p>
 It should be a form of template, later we pass values to replace them.
-We can create a template of all our definition ex: pod, deployment or service.
 
+We can create a template of all our definition ex: pod, deployment or service.
+</p>
+
+
+# Helm templates
 apart from the yaml file, we also have the chart.yaml that has info on the chart.
-It is like metadata.
+It is like metadata. 
+
+Note: #starting raw for gh-pages formatting curly braces. You have to put end raw in the end of the page.
+{% raw %}
+
 ```yaml
 #Service.yaml before helm templating
 ---
@@ -105,13 +114,57 @@ Imoortant fields to consider.
 - Keywords: Just like labels.
 
 
-# Helm Basics - commands
+## Helm Basics - commands
 
 Running `helm --help` is enough to know commands.
+```console
+$ helm --help
+The Kubernetes package manager
 
+Common actions for Helm:
+
+- helm search:    search for charts
+- helm pull:      download a chart to your local directory to view
+- helm install:   upload the chart to Kubernetes
+- helm list:      list releases of charts
+...
+Usage:
+  helm [command]
+
+Available Commands:
+  completion  generate autocompletion scripts for the specified shell
+  create      create a new chart with the given name
+  dependency  manage a chart's dependencies
+  env         helm client environment information
+  get         download extended information of a named release
+  help        Help about any command
+  history     fetch release history
+  install     install a chart
+  lint        examine a chart for possible issues
+  list        list releases
+  package     package a chart directory into a chart archive
+  plugin      install, list, or uninstall Helm plugins
+  pull        download a chart from a repository and (optionally) unpack it in local directory
+  push        push a chart to remote
+  registry    login to or logout from a registry
+  repo        add, list, remove, update, and index chart repositories
+  rollback    roll back a release to a previous revision
+  search      search for a keyword in charts
+  show        show information of a chart
+  status      display the status of the named release
+  template    locally render templates
+  test        run tests for a release
+  uninstall   uninstall a release
+  upgrade     upgrade a release
+  verify      verify that a chart at the given path has been signed and is valid
+  version     print the client version information
+```
+
+### helm search
 - `helm search hub wordpress` - gives results from artifacthub.io which is public hub for helm
 - `helm search wordpress` - search for chart in locally configured repos.
 
+### helm repo add
 To add the repo you can use
 ```console
 $ helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -124,6 +177,9 @@ bitnami/wordpress       22.2.2          6.5.2           WordPress is the worlds 
 bitnami/wordpress-intel 2.1.31          6.1.1           DEPRECATED WordPress for Intel is the most popu...
 
 ````
+
+### helm install
+-  `helm install <yourReleaseName> bitnami/wordpress` will install wordpress from the repo you mention
 Then we can install the wordpress with your app name `mywpapp`
 
 ```console
@@ -169,7 +225,7 @@ WARNING: There are "resources" sections in the chart not set. Using "resourcesPr
 
 
 ```
-
+### helm list
 Now `helm list` gives us list of avaible charts
 
 ```console
@@ -200,13 +256,14 @@ replicaset.apps/mywpapp-wordpress-88d479bb   1         1         0       4m1s
 NAME                               READY   AGE
 statefulset.apps/mywpapp-mariadb   0/1     4m2s
 
-
 ```
 
+### helm update
 `helm repo update` does the update of repo from the source. It is suggested to update once in a while.
 
 The biggest advantage of Helm is, when ever you want to remove this app from your namespace, 
 
+### helm uninstall
 you can simply clean up using a command 
 `helm uninstall mywpapp` 
 
@@ -228,7 +285,7 @@ wordpressBlogName: User's Blog!
 wordpressUserEmail: user@example.com
 ...
 ```
-
+### --set
 we can also override that using `--set` command while installing the chart. Like this
 
 `helm install --set wordpressBlogName="Helm Sample Blog" wordpressUserEmail="john@test.com" mywpapp bitnami/wordpress`
@@ -236,7 +293,7 @@ we can also override that using `--set` command while installing the chart. Like
 This will create an instance with provided params.
 
 what if you have more such custom params? 
-
+### --values 
 You can use the `--values` option passing the file with custome values `custom-values.yaml` file in your local, like this
 
 `helm install --values custom-values.yaml mywpapp bitnami/wordpress`
@@ -260,7 +317,8 @@ And then you can install it locally like this
 
 `helm install my-custom-wpapp ./wordpress`
 
-## Lifecycle Management
+
+# Lifecycle Management
 
 Each time we pull and install the repo creates a release. In the background it upgrade/downgrade/remove objects in the kubernetes layer.  
 The life cycle of the Helm chart consists of 3 stages:
@@ -314,8 +372,8 @@ REVISION        UPDATED                         STATUS          CHART           
 ```
 NOTE: We can rollback the app version or chart to previous version. But the data attached to volume like DB are not touched. So make sure you take timely backups of your volumes.
 
-## Helm charts Anatomy
-### Writing Helm charts
+# Helm charts Anatomy
+## Writing Helm charts
 
 We can write any kubernetes application just like a installation wizard. 
 Helm charts can do some extra things too. We have a way to restore. 
@@ -389,7 +447,7 @@ $ helm lint ./hello-world/
 1 chart(s) linted, 0 chart(s) failed
 ```
 
-### Helm template validation
+### Helm template validation (important)
 
 If we are not sure we used wrong variable name or variable doesnt exist or how these values are translated. In this case we have to use `helm template <chartname>`. This will render us the clear output after merging values in to the template. Means the final yaml.
 
@@ -534,6 +592,7 @@ Also, using `default` function we can pass the default value to take in case the
 `image: {{ default "nginx:1.16.0" .Values.image.repository}}`
 
 The coalesce function takes a list of values and returns the first non-empty one.
+
 ```sh
 Ex: 
 coalesce 0 1 2
@@ -563,9 +622,9 @@ write a condition only if that is present.
 * Remember the condition block should have properindentation and also proper closure. if - else - end. 
 * Space after the dash.
 * dash indicates replace this block
+
 ```yaml
 # eq is equals 
-
 metadata: 
   name: {{ .Release.Name }}-nginx
   {{- if .Values.orgLabel }}
@@ -577,12 +636,12 @@ metadata:
       - port: 80
         name: http
   ...
-
 ```
 ### With blocks - Scopes
 
 Suppose we have a configmap.yaml with data as dictionaty reading from values.yaml.
 That king of hierarchy with scope. Here `dot` in the `.Values` indicates that is on the root level.
+
 ```yaml
 # values.yaml
 app:
@@ -599,7 +658,7 @@ app:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-appinfo
+  name: {{ .Release.Name }}-appinfo`
 data:
   background: {{ .Values.app.ui.bg }}
   foreground : {{ .Values.app.ui.fg }}
@@ -705,3 +764,222 @@ metadata:
     type: web
     app: webapp-color
 ```
+
+## Named Templates
+
+Some times we tend to use same set of lines repeated across various manifest files. For ex, the labels part in deployment and service files. 
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }} 
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Release.Name }} 
+    app.kubernetes.io/instance: {{ .Release.Name }} 
+...
+```
+We can put these repeating lines to a file called `_helper.tpl`. 
+The underscore in the begining of the file name tells helm to avoid converting this files. 
+
+We define these lines with a variable like this and can use it anywhere we like in template manifest types.
+
+```yaml
+# _helpers.tpl
+{{- define "labels" }}
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+```
+usage in service file
+
+```yaml
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }} 
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- template "labels" . }} # <-- dot gives current context
+...
+```
+Since we are not giving the context to resolve .Release.Name in the _helpers.tpl file, we have to pass the context of root in this case like this `{{- template "labels" . }}`
+
+Also, remember we have to think about indentation of the template as it should appear in the final manifest files. 
+
+What happens if you use the same template in a deployment. Where you have labels in two levels.
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+  labels: 
+    app.kubernetes.io/name: {{ .Release.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Release.Name }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Release.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+  ...
+```
+It works as expected with correct indentation. But it fails to form the indent on the second label. So we use `indent 4` as a pipeline `|` to the template there to indent.
+
+
+
+| Item | Type
+| :------ | ------
+| template | action 
+| include |function 
+
+
+
+Remember, a template is not a function but its an action. So it cannot take the pipe as that doesnt produce any output. So we have to use a function like this to `include` the labels. Show in the below example. `{{- include "labels" . | indent 4}}`
+
+```yaml
+# deployment.yaml after labels helper
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+  labels: 
+    {{- template "labels" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "labels" . | indent 2}}
+  template:
+    metadata:
+      labels:
+        {{- include "labels" . | indent 4}}
+    spec:
+      containers:
+  ...
+```
+## Chart Hooks
+When ever we do `helm upgrade`, the process in the background takes a backup and then prepares for the version 2 changes. In this process it allows us to use hooks in various stages.
+- Helm upgrade => Verify -> Render -> Upgrade
+
+between these stages there are hooks
+- Helm install => Verify -> Render -> [`pre-install Hook`] -> Install -> [`post-install Hook`]
+- Helm delete => Verify -> Render -> [`pre-delete Hook`] -> Delete -> [`post-delete Hook`]
+- Helm upgrade => Verify -> Render -> [`pre-upgrade Hook`] -> Upgrade -> [`post-upgrade Hook`]
+- Helm rollback => Verify -> Render -> [`pre-rollback Hook`] -> rollback -> [`post-rollback Hook`]
+
+### creating hooks
+Lets have a script for `backup.sh` we want to run only want to run at once. One way to configure that as a startup pod.
+But what if you want it to run pre-upgrade process?
+
+you have to create an `annotation` to store data. 
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}
+  annotations: # << Here we add the hooks>>
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ .Release.Name }}
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: pre-upgrade-backup-job
+        image: "alpine"
+        command: ["/bin/backup.sh"]
+```
+## Packaging and Sigining charts
+
+Once you create your own chart. You can pack it and publish to a platform where it is easy for you to access.
+
+```console
+$ helm package ./nginx-chart
+Sucessfully packaged chart and saved it to: 
+ /home/documents/helm-charts/nginx-chart-0.1.0.tgz
+```
+The version after chart name comes from your Chart.yaml.
+
+But you have no security, so we create a gpg key to authorize valid consumer for this package.
+
+```console
+ gpg --quick-generate-key "Sudhakar M"
+About to create a key for:
+    "Sudhakar M"
+
+Continue? (Y/n) y
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+gpg: /c/Users/sudhakar/.gnupg/trustdb.gpg: trustdb created
+gpg: key E56E64645E7C75D1 marked as ultimately trusted
+gpg: directory '/c/Users/sudhakar/.gnupg/openpgp-revocs.d' created
+gpg: revocation certificate stored as '/c/Users/sudhakar/.gnupg/openpgp-revocs.d/381A7D966A2865F3EABFD46FE56E64645E7C75D1.rev'
+public and secret key created and signed.
+
+pub   rsa3072 2024-05-01 [SC] [expires: 2026-05-01]
+      381A7D966A2865F3EABFD46FE56E64645E7C75D1
+uid                      Sudhakar M
+sub   rsa3072 2024-05-01 [E]
+
+```
+
+we package this again with key.
+Refer: https://helm.sh/docs/topics/provenance/#the-workflow
+
+```console
+helm package --sign --key 'Sudhakar M' --keyring ~/.gnupg/secring.gpg ./nginx-chart
+
+```
+It  will create nginx-chart-0.1.0.tgz (a tar file of package) and nginx-chart-0.1.0.tgz.prov (a province file with signature)
+
+you can verify the package and install everytime like this
+
+`helm verify --keyring ./mypublickey ./nginx-0.1.0.tgz`
+
+## Uploading Charts
+
+The packaged chart we created in previous task which is signed. We should upload the same to common platform. Three things we need to prepare before uploading.
+
+To prepare index.yaml file,
+run this 
+`helm repo index nginx-chart-files/ --url https://example.com/charts`
+
+That generates an index.yaml file which contains the info about fescription and almost the data on Chart.yaml.
+
+you can upload this to S3 bucket, Github, Google storage or any other common place.
+
+
+1. Package file (nginx-0.1.0.tgz)
+2. Index file (index.yaml)
+3. province file (nginx-0.1.0.tgz.prov)
+
+
+
+## End - Thank you!
+{% endraw %} #To end the formatting for gh-pages. Do not remove this line
+
