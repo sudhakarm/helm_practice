@@ -567,7 +567,7 @@ write a condition only if that is present.
 
 ```yaml
 # eq is equals 
-
+{% raw %}
 metadata: 
   name: {{ .Release.Name }}-nginx
   {{- if .Values.orgLabel }}
@@ -579,13 +579,13 @@ metadata:
       - port: 80
         name: http
   ...
-
+{% endraw %}
 ```
 ### With blocks - Scopes
 
 Suppose we have a configmap.yaml with data as dictionaty reading from values.yaml.
 That king of hierarchy with scope. Here `dot` in the `.Values` indicates that is on the root level.
-
+{% raw %}
 ```yaml
 # values.yaml
 app:
@@ -602,7 +602,7 @@ app:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-appinfo
+  name: {{ .Release.Name }}-appinfo`
 data:
   background: {{ .Values.app.ui.bg }}
   foreground : {{ .Values.app.ui.fg }}
@@ -633,7 +633,7 @@ data:
     {{- end }} # end of .db
   {{- end }} # end of .Values.app
 ```
-
+{% endraw %}
 ### Loops and Ranges
 Just like in programming, we have loop for repeative function. Based on the number of iterations that function works.
 
