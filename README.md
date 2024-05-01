@@ -611,7 +611,7 @@ This works by just regular template filling values. We can use `with` block for 
 
 The above configmap can be rewritten using with block like below
 
-```yaml
+```sh
 # configmap.yaml with "with block"
 apiVersion: v1
 kind: ConfigMap
