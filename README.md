@@ -10,7 +10,11 @@ It should be a form of template, later we pass values to replace them.
 We can create a template of all our definition ex: pod, deployment or service.
 
 apart from the yaml file, we also have the chart.yaml that has info on the chart.
-It is like metadata.
+It is like metadata. 
+
+Note: #starting raw for gh-pages formatting curly braces. You have to put end raw in the end of the page.
+{% raw %}
+
 ```yaml
 #Service.yaml before helm templating
 ---
@@ -567,7 +571,6 @@ write a condition only if that is present.
 
 ```yaml
 # eq is equals 
-{% raw %}
 metadata: 
   name: {{ .Release.Name }}-nginx
   {{- if .Values.orgLabel }}
@@ -579,13 +582,12 @@ metadata:
       - port: 80
         name: http
   ...
-{% endraw %}
 ```
 ### With blocks - Scopes
 
 Suppose we have a configmap.yaml with data as dictionaty reading from values.yaml.
 That king of hierarchy with scope. Here `dot` in the `.Values` indicates that is on the root level.
-{% raw %}
+
 ```yaml
 # values.yaml
 app:
@@ -633,7 +635,7 @@ data:
     {{- end }} # end of .db
   {{- end }} # end of .Values.app
 ```
-{% endraw %}
+
 ### Loops and Ranges
 Just like in programming, we have loop for repeative function. Based on the number of iterations that function works.
 
@@ -708,3 +710,6 @@ metadata:
     type: web
     app: webapp-color
 ```
+
+{% endraw %} #To end the formatting for gh-pages. Do not remove this line
+
