@@ -534,6 +534,7 @@ Also, using `default` function we can pass the default value to take in case the
 `image: {{ default "nginx:1.16.0" .Values.image.repository}}`
 
 The coalesce function takes a list of values and returns the first non-empty one.
+
 ```sh
 Ex: 
 coalesce 0 1 2
@@ -563,6 +564,7 @@ write a condition only if that is present.
 * Remember the condition block should have properindentation and also proper closure. if - else - end. 
 * Space after the dash.
 * dash indicates replace this block
+
 ```yaml
 # eq is equals 
 
@@ -583,6 +585,7 @@ metadata:
 
 Suppose we have a configmap.yaml with data as dictionaty reading from values.yaml.
 That king of hierarchy with scope. Here `dot` in the `.Values` indicates that is on the root level.
+
 ```yaml
 # values.yaml
 app:
@@ -594,7 +597,7 @@ app:
     conn: "mongodb://localhost:27020/dbname"
 ```
 
-```js
+```yaml
 # configmap.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -611,7 +614,7 @@ This works by just regular template filling values. We can use `with` block for 
 
 The above configmap can be rewritten using with block like below
 
-```console
+```yaml
 # configmap.yaml with "with block"
 apiVersion: v1
 kind: ConfigMap
