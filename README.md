@@ -594,7 +594,7 @@ app:
     conn: "mongodb://localhost:27020/dbname"
 ```
 
-```yaml
+```js
 # configmap.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -611,7 +611,7 @@ This works by just regular template filling values. We can use `with` block for 
 
 The above configmap can be rewritten using with block like below
 
-```sh
+```console
 # configmap.yaml with "with block"
 apiVersion: v1
 kind: ConfigMap
