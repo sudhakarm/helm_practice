@@ -1,5 +1,6 @@
 # Helm - Notes
 
+Read in better view here : https://sudhakarm.github.io/helm_practice/
 There are major changes from Helm 2 to Helm 3. 
 We use Helm v3.X in our practice (it is considered as latest stable at present)
 
